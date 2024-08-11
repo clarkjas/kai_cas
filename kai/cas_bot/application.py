@@ -24,7 +24,7 @@ flask_app=Flask(__name__)
 configuration = Configuration(access_token=os.environ['ACCESS_TOKEN'])
 handler = WebhookHandler(os.environ['CHANNEL_SECRET'])
 
-@app.route("/callback", methods=['POST'])
+@flask_app.route("/callback", methods=['POST'])
 def callback():
     # get X-Line-Signature header value
     signature = request.headers['X-Line-Signature']
