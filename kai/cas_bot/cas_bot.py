@@ -60,4 +60,4 @@ if __name__ == "__main__":
     #     line_bot_api = MessagingApi(api_client)
     #     #print(line_bot_api.get_bot_info())
     #     print(line_bot_api.get_room_member_count())
-    app.run()
+    app.run(port=8080)
