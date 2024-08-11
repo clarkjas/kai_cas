@@ -2,8 +2,8 @@ import flask
 import os
 from cas_bot import application
 
-PORT: int = int(os.getenv['SERVER_PORT'])
-HOSTNAME: str = os.getenv['SERVER_HOSTNAME']
+PORT: int = int(os.environ['SERVER_PORT'])
+HOSTNAME: str = os.environ['SERVER_HOSTNAME']
 
 if __name__ == '__main__':
     app = application.flask_app
