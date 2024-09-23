@@ -1,6 +1,6 @@
 import flask
 import os
-from cas_bot import application
+from kai.cas_bot import application
 
 if __name__ == '__main__':
     app = application.flask_app
