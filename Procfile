@@ -1,1 +1,1 @@
-web: gunicorn kai:appserver
+web: gunicorn kai.appserver:gunicorn_app
