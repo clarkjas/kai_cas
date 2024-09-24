@@ -1,3 +1,4 @@
 Flask
 line-bot-sdk
 gunicorn
+apscheduler==3.10.4
