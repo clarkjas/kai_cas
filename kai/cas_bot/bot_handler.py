@@ -47,7 +47,7 @@ class LineBot:
         def handle_follow_event(event:FollowEvent):
             log.info("Got follow event")
             log.info(event)
-            log.info(f"Got user: {getattr(event.source, "userId", "NotFound")}")
+            log.info(f"Got user: {getattr(event.source, "user_id", "NotFound")}")
 
         @handler.add(UnfollowEvent)
         def handle_unfollow_event(event:UnfollowEvent):
@@ -63,7 +63,7 @@ class LineBot:
         @handler.add(MessageEvent, message=TextMessageContent)
         def handle_message(event):
             log.info(event)
-            log.info(f"Event from user: {getattr(event.source, "userId", "Not FOund")}")
+            log.info(f"Event from user: {getattr(event.source, "user_id", "Not Found")}")
             with ApiClient(self.configuration) as api_client:
                 line_bot_api = MessagingApi(api_client)
                 line_bot_api.reply_message_with_http_info(
