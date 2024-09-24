@@ -18,7 +18,8 @@ from linebot.v3.messaging import (
 )
 from linebot.v3.webhooks import (
     MessageEvent,
-    TextMessageContent
+    TextMessageContent,
+    FollowEvent
 )
 
 
@@ -39,7 +40,17 @@ class LineBot:
 
     def create_handlers(self):
         log.info("Creating handlers")
-        handler:WebhookHandler = self.handler
+        handler: WebhookHandler = self.handler
+
+        @handler.add(FollowEvent)
+        def handle_follow_event(event):
+            log.info("Got follow event")
+            log.info(event)
+
+        @handler.default()
+        def handle_default(event):
+            log.info("Got default")
+            log.info(event)
 
         @handler.add(MessageEvent, message=TextMessageContent)
         def handle_message(event):
