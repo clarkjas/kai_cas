@@ -19,7 +19,8 @@ from linebot.v3.messaging import (
 from linebot.v3.webhooks import (
     MessageEvent,
     TextMessageContent,
-    FollowEvent
+    FollowEvent,
+    UnfollowEvent
 )
 
 
@@ -43,9 +44,16 @@ class LineBot:
         handler: WebhookHandler = self.handler
 
         @handler.add(FollowEvent)
-        def handle_follow_event(event):
+        def handle_follow_event(event:FollowEvent):
             log.info("Got follow event")
             log.info(event)
+            log.info(f"Got user: {getattr(event.source, "userId", "NotFound")}")
+
+        @handler.add(UnfollowEvent)
+        def handle_unfollow_event(event:UnfollowEvent):
+            log.info("Got unfollow event")
+            log.info(event)
+
 
         @handler.default()
         def handle_default(event):
