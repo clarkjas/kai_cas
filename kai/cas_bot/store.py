@@ -99,7 +99,6 @@ if __name__ == "__main__":
     store.add_event(ScheduledEvent("ok", '07-14-1977', '123'))
     events: List[ScheduledEvent] = store.get_events()
     [print(e) for e in events]
-    for e in events:
-        store.remove_event(e.event_id)
+    store.remove_event("123")
     events = store.get_events()
     print(events)

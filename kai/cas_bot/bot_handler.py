@@ -1,10 +1,12 @@
 import os
 import logging
 from typing import List
+import re
 import datetime
 from kai.cas_bot.store import BaseStore, RedisStore
 from kai.cas_bot.scheduler import BotScheduler
 from kai.cas_bot.models import EVENT_WEEK, EVENT_DAY, ScheduledEvent
+import uuid
 
 from linebot.v3 import (
     WebhookHandler
@@ -22,7 +24,8 @@ from linebot.v3.messaging import (
     PushMessageRequest,
     PushMessageResponse,
     TextMessage,
-    BroadcastRequest
+    BroadcastRequest,
+    ApiException
 )
 
 from linebot.v3.webhooks import (
@@ -42,27 +45,33 @@ class Messanger:
         self.configuration = configuration
 
     def send_message_to_all_users(self, users: list, message: str):
-        try:
-            with ApiClient(self.configuration) as api_client:
-                line_bot_api = MessagingApi(api_client)
-                for user in users:
-                    response: PushMessageResponse = line_bot_api.push_message(PushMessageRequest(
-                        to=user, messages=[TextMessage(text=message)]
-                    ))
-                    print(response)
-        except Exception as e:
-            log.exception("Failed while sending to all users", e)
+        failed_users = list()
+        with ApiClient(self.configuration) as api_client:
+            line_bot_api = MessagingApi(api_client)
+            for user in users:
+                success: bool = self.send_message(line_bot_api, user, message)
+                if not success:
+                    failed_users.append(user)
+        return failed_users
 
     def send_message_to_user(self, user_id, message):
+        with ApiClient(self.configuration) as api_client:
+            line_bot_api = MessagingApi(api_client)
+            success: bool = self.send_message(line_bot_api, user_id, message)
+            return success
+
+    def send_message(self, line_bot_api: MessagingApi, user_id, msg: str):
         try:
-            with ApiClient(self.configuration) as api_client:
-                line_bot_api = MessagingApi(api_client)
-                response: PushMessageResponse = line_bot_api.push_message(PushMessageRequest(
-                    to=user_id, messages=[TextMessage(text=message)]
-                ))
-                print(response)
-        except Exception as e:
-            log.exception("Failed while sending to all users", e)
+            response: PushMessageResponse = line_bot_api.push_message(PushMessageRequest(
+                to=user_id,
+                messages=[TextMessage(text=msg)]
+            ))
+            return True
+        except ApiException as e:
+            log.exception(e)
+            if e.reason == "Bad Request":
+                log.error("For our case, likely a bad user. Remove the user")
+            return False
 
 
 class ScheduledEventHandler:
@@ -87,18 +96,24 @@ class ScheduledEventHandler:
     def handle_week(self):
         self.handle_interval(30)
 
-    def handle_interval(self, delta:int):
+    def handle_interval(self, delta: int):
         log.info(f"Executing interval messaging on delta {delta}")
         messages_to_send: str = f"Events upcoming in {delta} days or less:\n"
 
         events: List[ScheduledEvent] = self.store.get_events()
+        if not events:
+            return
+
         now = datetime.datetime.now()
         from_now = now + datetime.timedelta(days=delta)
         for event in events:
             if event.event_date < from_now.date():
                 messages_to_send += f"{event.event_date.strftime("%m-%d-%Y")} - {event.msg}\n"
 
-        self.messanger.send_message_to_all_users(self.store.get_all_users(), messages_to_send)
+        failed_users: list = self.messanger.send_message_to_all_users(self.store.get_all_users(), messages_to_send)
+        for user in failed_users:
+            log.error(f"Failed user request. Removing user. {user}")
+            self.store.remove_user(user)
 
     def handle_maintenance(self):
         self.handle_day()
@@ -161,20 +176,35 @@ class LineBot:
 
             text: str = event.message.text
             if text.startswith("!"):
-                ...
+                user_type: str = self.store.get_user_type(user_id)
+                if user_type == "ADMIN":
+                    self.process_event_request(text)
 
-            # with ApiClient(self.configuration) as api_client:
-            #     line_bot_api = MessagingApi(api_client)
-            #     line_bot_api.reply_message_with_http_info(
-            #         ReplyMessageRequest(
-            #             reply_token=event.reply_token,
-            #             messages=[TextMessage(text=event.message.text)]
-            #         )
-            #     )
+    def process_event_request(self, text: str):
+        pattern: str = r"^!(\w+)(?:,([^,]*),([^,]*))?$"
+        match = re.match(pattern, text)
+        if match:
+            event = match.group(1)
+            if event == 'addevent':
+                return self.process_add_event_request(text)
 
-    def process_set_event_request(self, text:str):
-        data = text.split(text)
-
+    def process_add_event_request(self, text):
+        pattern:str = r"^!(\w+),([\d-]+),(.+)$"
+        match = re.match(pattern, text)
+        if match:
+            event = match.group(1)
+            date = match.group(2)
+            message = match.group(3)
+            uid: str = str(uuid.uuid4())
+            try:
+                final_date = datetime.datetime.strptime(date, "%d-%m-%Y")
+            except ValueError as e:
+                log.exception(f"Invalidate date format given in {text}", e)
+                return f"Invalidate date format given in {text}"
+            event: ScheduledEvent = ScheduledEvent(message, date, uid)
+            self.store.add_event(event)
+            return "Event Added"
+        return "Unable to add event"
 
     def handle(self, event, signature):
         log.info("Received handle request")
