@@ -178,7 +178,8 @@ class LineBot:
             if text.startswith("!"):
                 user_type: str = self.store.get_user_type(user_id)
                 if user_type == "ADMIN":
-                    self.process_event_request(text)
+                    response = self.process_event_request(text)
+                    self.messanger.send_message_to_user(user_id, response)
 
     def process_event_request(self, text: str):
         pattern: str = r"^!(\w+)(?:,([^,]*),([^,]*))?$"
