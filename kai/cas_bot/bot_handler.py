@@ -202,6 +202,7 @@ class LineBot:
                 log.exception(f"Invalidate date format given in {text}", e)
                 return f"Invalidate date format given in {text}"
             event: ScheduledEvent = ScheduledEvent(message, date, uid)
+            log.info(f"creating event: {str(event)}")
             self.store.add_event(event)
             return "Event Added"
         return "Unable to add event"
