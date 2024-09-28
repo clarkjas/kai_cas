@@ -117,6 +117,11 @@ class ScheduledEventHandler:
 
     def handle_maintenance(self):
         self.handle_day()
+        events = self.store.get_events()
+        for e in events:
+            now = datetime.datetime.now().date()
+            if e.event_date < now:
+                self.store.remove_event(e.event_id)
 
 
 class LineBot:
