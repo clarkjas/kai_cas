@@ -1,0 +1,9 @@
+heroku ps:scale web=0
+heroku ps:scale web=1
+heroku logs --tail
+git push heroku main
+
+Checkout project
+in repo run heroku create
+Then you can run
+git push heroku main
