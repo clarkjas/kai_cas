@@ -121,6 +121,7 @@ class ScheduledEventHandler:
         for e in events:
             now = datetime.datetime.now().date()
             if e.event_date < now:
+                log.info(f"Deleting old event: {str(e)}")
                 self.store.remove_event(e.event_id)
 
 
