@@ -20,6 +20,9 @@ class BaseStore:
     def remove_user(self, user_id) -> None:
         ...
 
+    def get_user_type(self, user_id) -> str:
+        ...
+
     def get_all_users(self) -> List[str]:
         ...
 
@@ -48,12 +51,18 @@ class RedisStore(BaseStore):
     def add_user(self, user_id):
         self.redis.hset(USER_NAME_MAP, user_id, "USER")
 
+    def get_user_type(self, user_id):
+        if not self.user_exists(user_id):
+            return ""
+        ut = self.redis.hget(USER_NAME_MAP, user_id).decode('utf-8')
+        return ut
+
     def remove_user(self, user_id):
         self.redis.hdel(USER_NAME_MAP, user_id)
 
     def get_all_users(self):
         data = [a.decode('utf-8') for a in self.redis.hgetall(USER_NAME_MAP)]
-        return data[::2]
+        return data
 
     def add_event(self, event: ScheduledEvent):
         data: str = json.dumps(event.to_dict())
@@ -78,6 +87,7 @@ if __name__ == "__main__":
     store = RedisStore()
     print(store.user_exists("a"))
     store.add_user("a")
+    print(store.get_user_type("a"))
     print(store.user_exists("a"))
     print(store.get_all_users())
     store.remove_user("a")
