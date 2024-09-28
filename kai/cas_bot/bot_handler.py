@@ -5,7 +5,7 @@ import re
 import datetime
 from kai.cas_bot.store import BaseStore, RedisStore
 from kai.cas_bot.scheduler import BotScheduler
-from kai.cas_bot.models import EVENT_WEEK, EVENT_DAY, ScheduledEvent
+from kai.cas_bot.models import EVENT_WEEK, EVENT_DAY, ScheduledEvent, DATE_FORMAT
 import uuid
 
 from linebot.v3 import (
@@ -108,7 +108,7 @@ class ScheduledEventHandler:
         from_now = now + datetime.timedelta(days=delta)
         for event in events:
             if event.event_date < from_now.date():
-                messages_to_send += f"{event.event_date.strftime("%m-%d-%Y")} - {event.msg}\n"
+                messages_to_send += f"{event.event_date.strftime(DATE_FORMAT)} - {event.msg}\n"
 
         failed_users: list = self.messanger.send_message_to_all_users(self.store.get_all_users(), messages_to_send)
         for user in failed_users:
@@ -197,7 +197,7 @@ class LineBot:
             message = match.group(3)
             uid: str = str(uuid.uuid4())
             try:
-                final_date = datetime.datetime.strptime(date, "%d-%m-%Y")
+                final_date = datetime.datetime.strptime(date, DATE_FORMAT)
             except ValueError as e:
                 log.exception(f"Invalidate date format given in {text}", e)
                 return f"Invalidate date format given in {text}"

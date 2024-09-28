@@ -4,6 +4,7 @@ import uuid
 EVENT_DAY: str = "DAY"
 EVENT_WEEK: str = "WEEK"
 USER_NAME_MAP: str = "USERS"
+DATE_FORMAT="%m-%d-%Y"
 
 
 class ScheduledEvent:
@@ -12,7 +13,7 @@ class ScheduledEvent:
     event_id:str
 
     def __init__(self, msg: str, event_date:str, event_id:str):
-        self.event_date = datetime.datetime.strptime(event_date, "%m-%d-%Y").date()
+        self.event_date = datetime.datetime.strptime(event_date, DATE_FORMAT).date()
         self.msg = msg
         self.event_id = event_id
 
@@ -21,10 +22,10 @@ class ScheduledEvent:
         return ScheduledEvent(**d)
 
     def to_dict(self):
-        return {"msg": self.msg, "event_date": self.event_date.strftime("%m-%d-%Y"), "event_id": self.event_id}
+        return {"msg": self.msg, "event_date": self.event_date.strftime(DATE_FORMAT), "event_id": self.event_id}
 
     def __str__(self):
-        return f"EventId: {self.event_id}\tMsg: {self.msg}\tDate: {self.event_date.strftime("%m-%d-%Y")}"
+        return f"EventId: {self.event_id}\tMsg: {self.msg}\tDate: {self.event_date.strftime(DATE_FORMAT)}"
 
 
 if __name__ == "__main__":
