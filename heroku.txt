@@ -1,9 +1,18 @@
 heroku ps:scale web=0
+git push heroku main
 heroku ps:scale web=1
 heroku logs --tail
-git push heroku main
+
 
 Checkout project
 in repo run heroku create
 Then you can run
 git push heroku main
+
+In Heroku configs, you need to setup the following config Vars
+ACCESS_TOKEN - From LINE API
+CHANNEL_SECRET - From LINE API
+WEB_CONCURRENCY = 1. This is a test app, not trying to scale it out, so it's not written to properly handle multi threaded behavior with gunicorn
+
+You need to get a USER to subscribe to the BOT, then you need to edit the user type to ADMIN manually if you want
+to set them up to be able to add entries into the redis container

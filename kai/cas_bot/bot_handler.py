@@ -37,7 +37,10 @@ from linebot.v3.webhooks import (
 
 log = logging.getLogger(__name__)
 
-
+############################################################
+#The messanger wraps the calls to send message to one or
+#more users
+############################################################
 class Messanger:
     configuration: Configuration
 
@@ -73,7 +76,11 @@ class Messanger:
                 log.error("For our case, likely a bad user. Remove the user")
             return False
 
-
+############################################################
+#The ScheduledEventHandler handles callback rquests
+#from the APScheduler in the scheduler module
+#It uses the store and messager to execute its behavior
+############################################################
 class ScheduledEventHandler:
     store: BaseStore
     messanger: Messanger
@@ -116,7 +123,6 @@ class ScheduledEventHandler:
             self.store.remove_user(user)
 
     def handle_maintenance(self):
-        self.handle_day()
         events = self.store.get_events()
         for e in events:
             now = datetime.datetime.now().date()
@@ -124,7 +130,12 @@ class ScheduledEventHandler:
                 log.info(f"Deleting old event: {str(e)}")
                 self.store.remove_event(e.event_id)
 
-
+############################################################
+#The main linebot object.
+#Is is the container class for scheduler and handlers
+#It also sets up all the callback handlers for the line
+#webhook
+############################################################
 class LineBot:
     handler: WebhookHandler
     configuration: Configuration
@@ -148,6 +159,11 @@ class LineBot:
     def maintenance_cb(self):
         self.event_handler.handle_maintenance()
 
+
+    ##############################
+    #Create all the line ap
+    #callbacks as decorator funcs
+    ##############################
     def create_handlers(self):
         log.info("Creating handlers")
         handler: WebhookHandler = self.handler
@@ -187,6 +203,10 @@ class LineBot:
                     response = self.process_event_request(text)
                     self.messanger.send_message_to_user(user_id, response)
 
+    ##########################################
+    #Handles the api for admins to send
+    #create events via the linebot
+    ##########################################
     def process_event_request(self, text: str):
         pattern: str = r"^!(\w+)(?:,([^,]*),([^,]*))?$"
         match = re.match(pattern, text)
@@ -195,6 +215,9 @@ class LineBot:
             if event == 'addevent':
                 return self.process_add_event_request(text)
 
+    ########################################
+    #Handles the actual add request
+    ########################################
     def process_add_event_request(self, text):
         pattern:str = r"^!(\w+),([\d-]+),(.+)$"
         match = re.match(pattern, text)

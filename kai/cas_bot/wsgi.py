@@ -1,3 +1,7 @@
+#############################################
+#The flask app itself
+#############################################
+
 from flask import Flask, request, abort
 import os
 import logging
